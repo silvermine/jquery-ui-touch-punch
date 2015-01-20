@@ -18,6 +18,9 @@
     return;
   }
 
+  // Configuration Parameters
+  var TOUCH_MOVE_BUFFER = 5;  // Distance in px before move is triggered.
+
   var mouseProto = $.ui.mouse.prototype,
       _mouseInit = mouseProto._mouseInit,
       _mouseDestroy = mouseProto._mouseDestroy,
@@ -79,6 +82,13 @@
     // Set the flag to prevent other widgets from inheriting the touch event
     touchHandled = true;
 
+    // Save the origin of the touch event for later
+    var touch = event.originalEvent.changedTouches[0];
+    self._touchOrigin = {
+        'x': touch.clientX,
+        'y': touch.clientY
+    };
+
     // Track movement to determine if interaction was a click
     self._touchMoved = false;
 
@@ -101,6 +111,18 @@
     // Ignore event if not handled
     if (!touchHandled) {
       return;
+    }
+
+    if (this._touchOrigin) {
+        // Calculate distance of movement using Pythagorean theorem
+        var touch = event.originalEvent.changedTouches[0];
+        var x = touch.clientX - this._touchOrigin.x;
+        var y = touch.clientY - this._touchOrigin.y;
+        var magnitude = Math.sqrt( x*x + y*y );
+
+        if (magnitude < TOUCH_MOVE_BUFFER) {
+            return;
+        }
     }
 
     // Interaction was not a click
